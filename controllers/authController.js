@@ -7,9 +7,17 @@ exports.signup = async (req, res) => {
   const { email, phone, password, confirmPassword } = req.body;
   if (password !== confirmPassword) return res.status(400).json({ msg: "Passwords do not match" });
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await User.create({ email, phone, password: hashed });
-  res.status(201).json({ msg: "User created" });
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ email, phone, password: hashed });
+    res.status(201).json({ msg: "User created" });
+  } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0];
+      return res.status(409).json({ msg: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists` });
+    }
+    res.status(500).json({ msg: "Internal server error" });
+  }
 };
 
 exports.login = async (req, res) => {
