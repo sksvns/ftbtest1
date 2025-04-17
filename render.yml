@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: flip-to-win-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node app.js
