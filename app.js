@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/balance", require("./routes/balanceRoutes"));
+app.use("/api/play", require("./routes/playRoutes"));
+app.use("/api/withdraw", require("./routes/withdrawRoutes"));
+app.use("/api/deposit", require("./routes/depositRoutes"));
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
