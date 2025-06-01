@@ -33,7 +33,7 @@ exports.requestDeposit = async (req, res) => {
     const fileName = `${userId}-${Date.now()}${fileExtension}`;
     const filePath = path.join(uploadDir, fileName);
     
-    fs.writeFileSync(filePath, paymentProof.buffer);
+    // fs.writeFileSync(filePath, paymentProof.buffer);
 
     // Create transaction request record
     const transactionRequest = await TransactionRequest.create({
