@@ -16,6 +16,7 @@ app.use("/api/play", require("./routes/playRoutes"));
 app.use("/api/withdraw", require("./routes/withdrawRoutes"));
 app.use("/api/deposit", require("./routes/depositRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/help", require("./routes/helpRoutes"));
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {

@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
     unique: true 
   },
   password: String,
+  referralId: {
+    type: String,
+    default: null
+  },
   walletBalance: {
     type: Number,
     default: 0

@@ -4,12 +4,17 @@ const jwt = require("jsonwebtoken");
 const { sendOTP } = require("../utils/sendOtp");
 
 exports.signup = async (req, res) => {
-  const { email, phone, password, confirmPassword } = req.body;
+  const { email, phone, password, confirmPassword, referralId } = req.body;
   if (password !== confirmPassword) return res.status(400).json({ msg: "Passwords do not match" });
 
   try {
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, phone, password: hashed });
+    const user = await User.create({ 
+      email, 
+      phone, 
+      password: hashed,
+      referralId: referralId || null 
+    });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     res.status(201).json({ msg: "User created", token, userId: user.userId });
