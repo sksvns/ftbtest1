@@ -1,6 +1,7 @@
-const User = require('../models/User');
-const TransactionRequest = require('../models/TransactionRequest');
-const nodemailer = require('nodemailer');
+const User = require("../models/User");
+const TransactionRequest = require("../models/TransactionRequest");
+const emailService = require('../utils/emailService');
+const logger = require('../config/logger');
 
 exports.requestWithdraw = async (req, res) => {
   try {
@@ -58,41 +59,23 @@ exports.requestWithdraw = async (req, res) => {
         ifscCode,
         accountNumber: accountNumber || "N/A"
       },
-      upiId
-    });
+      upiId    });
 
-    // Configure email transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.EMAIL || process.env.EMAIL_USER;
+      if (adminEmail) {
+        await emailService.sendWithdrawalNotification(adminEmail, {
+          requestId: transactionRequest._id,
+          userId,
+          amount: withdrawAmount,
+          upiId
+        });
       }
-    });
-
-    // Send email to admin
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: process.env.EMAIL,
-      subject: `Withdrawal Request - ${userId}`,
-      html: `
-        <h2>New Withdrawal Request</h2>
-        <p><strong>Request ID:</strong> ${transactionRequest._id}</p>
-        <p><strong>User ID:</strong> ${userId}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        ${bankName ? `
-        <p><strong>Bank Details:</strong></p>
-        <ul>
-          <li>Bank Name: ${bankName}</li>
-          <li>IFSC Code: ${ifscCode}</li>
-          <li>Account Number: ${accountNumber}</li>
-        </ul>` : ''}
-        ${upiId ? `<p><strong>UPI ID:</strong> ${upiId}</p>` : ''}
-        <p><strong>Withdrawal Amount:</strong> ₹${withdrawAmount}</p>
-        <p><strong>Current Balance:</strong> ₹${user.currentBalance}</p>
-        <p><strong>Wallet Balance:</strong> ₹${user.walletBalance}</p>
-      `
-    });
+    } catch (emailError) {
+      logger.warn('Failed to send withdrawal notification email:', emailError);
+      // Don't fail the withdrawal request if email fails
+    }
 
     res.json({ 
       msg: 'Withdrawal request submitted successfully',

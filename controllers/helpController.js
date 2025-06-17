@@ -1,6 +1,7 @@
 const HelpQuery = require('../models/HelpQuery');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
+const emailService = require('../utils/emailService');
+const logger = require('../config/logger');
 
 // User endpoint to submit a help query
 exports.submitQuery = async (req, res) => {
@@ -23,34 +24,23 @@ exports.submitQuery = async (req, res) => {
       email: user.email,
       subject,
       message,
-      isOpened: false
-    });
+      isOpened: false    });
 
-    // Configure email transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.EMAIL || process.env.EMAIL_USER;
+      if (adminEmail) {
+        await emailService.sendHelpQuery(adminEmail, {
+          queryId: helpQuery._id,
+          userId,
+          subject,
+          message
+        });
       }
-    });
-
-    // Send email to admin
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: process.env.EMAIL,
-      subject: `Help Request: ${subject} - User ${userId}`,
-      html: `
-        <h2>New Help Request</h2>
-        <p><strong>Query ID:</strong> ${helpQuery._id}</p>
-        <p><strong>User ID:</strong> ${userId}</p>
-        <p><strong>User Email:</strong> ${user.email}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-        <p><strong>Timestamp:</strong> ${helpQuery.createdAt}</p>
-      `
-    });
+    } catch (emailError) {
+      logger.warn('Failed to send help query notification email:', emailError);
+      // Don't fail the help query if email fails
+    }
 
     res.status(201).json({
       msg: 'Your query has been submitted successfully',

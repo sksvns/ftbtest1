@@ -7,7 +7,7 @@ const {
   markQueryAsOpened,
   getUserQueriesForAdmin
 } = require('../controllers/helpController');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 
 // User routes (JWT authenticated)

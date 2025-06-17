@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const TransactionRequest = require('../models/TransactionRequest');
-const nodemailer = require('nodemailer');
+const emailService = require('../utils/emailService');
+const logger = require('../config/logger');
 const fs = require('fs');
 const path = require('path');
 
@@ -41,37 +42,23 @@ exports.requestDeposit = async (req, res) => {
       type: "deposit",
       amount: Number(amount),
       status: "submitted",
-      paymentProofPath: `uploads/${fileName}`
-    });
+      paymentProofPath: `uploads/${fileName}`    });
 
-    // Configure email transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.EMAIL || process.env.EMAIL_USER;
+      if (adminEmail) {
+        await emailService.sendDepositNotification(adminEmail, {
+          requestId: transactionRequest._id,
+          userId,
+          amount,
+          utrNumber: 'N/A' // Add UTR if available
+        });
       }
-    });
-
-    // Send email to admin
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: process.env.EMAIL,
-      subject: `Deposit Request - ${userId}`,
-      html: `
-        <h2>New Deposit Request</h2>
-        <p><strong>Request ID:</strong> ${transactionRequest._id}</p>
-        <p><strong>User ID:</strong> ${userId}</p>
-        <p><strong>User Email:</strong> ${user.email}</p>
-        <p><strong>Amount:</strong> ₹${amount}</p>
-        <p><strong>Current Balance:</strong> ₹${user.currentBalance}</p>
-        <p><strong>Wallet Balance:</strong> ₹${user.walletBalance}</p>
-      `,
-      attachments: [{
-        filename: paymentProof.originalname,
-        content: paymentProof.buffer
-      }]
-    });
+    } catch (emailError) {
+      logger.warn('Failed to send deposit notification email:', emailError);
+      // Don't fail the deposit request if email fails
+    }
 
     res.json({ 
       msg: 'Deposit request submitted successfully',

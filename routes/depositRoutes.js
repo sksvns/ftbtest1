@@ -7,7 +7,7 @@ const {
   getUserDepositsForAdmin,
   processDepositRequest
 } = require('../controllers/depositController');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 // User routes

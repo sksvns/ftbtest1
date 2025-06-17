@@ -7,7 +7,7 @@ const {
   getUserWithdrawalsForAdmin,
   processWithdrawalRequest
 } = require('../controllers/withdrawController');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // User routes
 router.post('/request', auth, requestWithdraw);
